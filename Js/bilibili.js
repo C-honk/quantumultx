@@ -144,7 +144,7 @@
       static group = (e) => eb.#t.unshift(e);
       static groupEnd = () => eb.#t.shift();
       static info(...e) {
-        !(eb.#i < 3) && ((e = e.map((e) => `ℹ️ ${e}`)), eb.log(...e));
+        !(eb.#i < 0) && ((e = e.map((e) => `ℹ️ ${e}`)), eb.log(...e));
       }
       static #i = 0;
       static get logLevel() {
