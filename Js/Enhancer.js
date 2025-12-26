@@ -7028,3 +7028,5 @@ ${o[0][b][0]}`;
   }
   qr().catch((l) => {
     console.log(l.message), w.exit();
+  });
+})();
