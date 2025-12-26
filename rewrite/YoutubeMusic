@@ -3,4 +3,4 @@
 hostname = youtubei.googleapis.com,*.googlevideo.com
 
 ^https:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad url reject-200
-^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch) url script-response-body https://github.com/C-honk/quantumultx/raw/refs/heads/main/Js/Enhancer.js
+^https:\/\/youtubei\.googleapis\.com\/(youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch))(\?(.*))?$ url script-response-body https://github.com/C-honk/quantumultx/raw/refs/heads/main/Js/Enhancer.js
