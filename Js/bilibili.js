@@ -49433,17 +49433,29 @@
     ]);
 
 
+const eb = {
+    info: function() {},
+    log: function() {},
+    warn: function() {},
+    error: function() {},
+    debug: function() {}
+};
+
 let gl = new URL($request.url);
+eb.info(`url: ${gl.toJSON()}`);
 let gd = gl.pathname.split("/").filter(Boolean);
+eb.info(`PATHs: ${gd}`);
 let gc = (
   $response.headers?.["Content-Type"] ?? $response.headers?.["content-type"]
 )?.split(";")?.[0];
-(async () => {
+eb.info(`FORMAT: ${gc}`),
+  (async () => {
     let {
       Settings: e,
       Caches: t,
       Configs: n,
     } = (function (e, t, n) {
+      eb.log("☑️ Set Environment Variables");
       let {
         Settings: i,
         Caches: a,
@@ -49516,8 +49528,14 @@ let gc = (
           i
         );
       })(e, t, n);
-      return { Settings: i, Caches: a, Configs: r };
+      eb.info(
+        `typeof Settings: ${typeof i}`,
+        `Settings: ${JSON.stringify(i, null, 2)}`,
+      ),
+      eb.log("✅ Set Environment Variables"),
+      { Settings: i, Caches: a, Configs: r }
     })("BiliBili", "ADBlock", n9);
+    eb.logLevel = e.LogLevel;
     let i = { code: 0, message: "0", data: {} };
     switch (gc) {
       case void 0:
@@ -49552,6 +49570,7 @@ let gc = (
                 switch (e?.Splash) {
                   case !0:
                   default:
+                    eb.log("✅ 开屏页广告去除");
                     i.data &&
                       ["account", "event_list", "preload", "show"].forEach(
                         (e) => {
@@ -49560,6 +49579,7 @@ let gc = (
                       );
                     break;
                   case !1:
+                    eb.warn("用户设置开屏页广告不去除");
                 }
                 break;
               case "/x/v2/feed/index":
@@ -49570,7 +49590,7 @@ let gc = (
                       let e = ev.getItem("@BiliBili.Index.Caches"),
                         t = {};
                       if (e && e.length > 0)
-                        (t = e.pop());
+                        (t = e.pop()), eb.log("✅ 推荐页空缺位填充成功");
                       else {
                         let n = {
                           url: $request.url,
@@ -49629,14 +49649,17 @@ let gc = (
                                 ev.setItem(
                                   "@BiliBili.Index.Caches",
                                   t.data.items,
-                                ))
-                              : null;
+                                ),
+                                eb.log("✅ 推荐页缓存数组补充成功"))
+                              : eb.warn("访问推荐页尝试填补失败");
                           } catch (t) {
+                            eb.error(t, e);
                           }
                         }),
                           (e = ev.getItem("@BiliBili.Index.Caches"))
                             .length > 0 &&
-                            (t = e.pop());
+                            ((t = e.pop()),
+                            eb.log("✅ 推荐页空缺位填充成功"));
                       }
                       return ev.setItem("@BiliBili.Index.Caches", e), t;
                     }
@@ -49651,13 +49674,15 @@ let gc = (
                             ) {
                               if (e?.Feed?.Activity === !0) {
                                 (t.banner_hash = n.hash),
-                                  ev.setItem("@BiliBili.ADBlock.Caches", t);
+                                  ev.setItem("@BiliBili.ADBlock.Caches", t),
+                                  eb.log("✅ 推荐页活动大图去除");
                                 return;
                               }
                               n.banner_item &&
                                 (n.banner_item = n.banner_item.filter(
                                   (e) =>
-                                    "ad" !== e.type || !1,
+                                    "ad" !== e.type ||
+                                    (eb.log("✅ 推荐页大图广告去除"), !1),
                                 ));
                             } else if (
                               ["cm_v2", "cm_v1"].includes(i) &&
@@ -49665,7 +49690,10 @@ let gc = (
                                 r,
                               )
                             ) {
-                              if ("phone" !== gl.searchParams.get("device"))
+                              if (
+                                (eb.log(`✅ ${r}广告去除`),
+                                "phone" !== gl.searchParams.get("device"))
+                              )
                                 return;
                               await a().then((e) => (n = e));
                             } else if (
@@ -49675,7 +49703,10 @@ let gc = (
                               let t = e?.Feed?.BlockUpLiveList;
                               "number" == typeof t && (t = t.toString()),
                                 t?.includes(n?.args?.up_id?.toString()) &&
-                                  await a().then((e) => (n = e));
+                                  (eb.log(
+                                    `✅ 屏蔽Up主<${n?.args?.up_name}>直播推广`,
+                                  ),
+                                  await a().then((e) => (n = e)));
                             } else if (
                               "cm_v2" === i &&
                               [
@@ -49685,24 +49716,32 @@ let gc = (
                                 "ad_inline_live",
                               ].includes(r)
                             ) {
+                              eb.log(`✅ ${r}广告去除`);
                               return;
                             } else if (
                               "small_cover_v10" === i &&
                               "game" === r
                             ) {
-                              if ("phone" !== gl.searchParams.get("device"))
+                              if (
+                                (eb.log("✅ 游戏广告去除"),
+                                "phone" !== gl.searchParams.get("device"))
+                              )
                                 return;
                               await a().then((e) => (n = e));
                             } else if (
                               "cm_double_v9" === i &&
                               "ad_inline_av" === r
                             ) {
+                              eb.log("✅ 大视频广告去除");
                               return;
                             } else
                               "vertical_av" === o &&
                                 (e?.Feed?.Vertical === !0
-                                  ? await a().then((e) => (n = e))
-                                  : null);
+                                  ? (eb.log("✅ 竖屏视频去除"),
+                                    await a().then((e) => (n = e)))
+                                  : eb.warn(
+                                      "用户设置推荐页竖屏视频不去除",
+                                    ));
                           }
                           return n;
                         }),
@@ -49712,6 +49751,7 @@ let gc = (
                       )));
                     break;
                   case !1:
+                    eb.warn("用户设置推荐页广告不去除");
                 }
                 break;
               case "/x/v2/feed/index/story":
@@ -49719,6 +49759,7 @@ let gc = (
                   case !0:
                   default:
                     i.data?.items &&
+                      (eb.log("✅ 首页短视频流广告去除"),
                       (i.data.items = i.data.items.filter(
                         (e) =>
                           !(
@@ -49727,20 +49768,23 @@ let gc = (
                               e.card_goto,
                             )
                           ),
-                      ));
+                      )));
                     break;
                   case !1:
+                    eb.warn("用户设置首页短视频流广告不去除");
                 }
                 break;
               case "/x/v2/search/square":
                 switch (e?.Search?.HotSearch) {
                   case !0:
                   default:
-                    i.data = i.data.filter(
-                      (e) => "trending" !== e.type,
-                    );
+                    eb.log("✅ 搜索页热搜内容去除"),
+                      (i.data = i.data.filter(
+                        (e) => "trending" !== e.type,
+                      ));
                     break;
                   case !1:
+                    eb.warn("用户设置搜索页热搜内容不去除");
                 }
                 break;
             }
@@ -49754,6 +49798,7 @@ let gc = (
                   case !0:
                   default:
                     i.result?.modules &&
+                      (eb.log("✅ 观影页广告去除"),
                       i.result.modules.forEach((e) => {
                         e.style.startsWith("banner")
                           ? (e.items = e.items.filter((e) =>
@@ -49766,9 +49811,10 @@ let gc = (
                             : [241, 1283, 1284, 1441].includes(e.module_id)
                               ? (e.items = [])
                               : e.style.startsWith("tip") && (e.items = []);
-                      });
+                      }));
                     break;
                   case !1:
+                    eb.warn("用户设置观影页广告不去除");
                 }
                 break;
               case "/x/player/wbi/playurl":
@@ -49777,11 +49823,13 @@ let gc = (
                 switch (e?.Feed?.AD) {
                   case !0:
                   default:
-                    i.data.item = i.data.item.filter(
-                      (e) => "ad" !== e.goto,
-                    );
+                    eb.log("✅ 首页广告内容去除"),
+                      (i.data.item = i.data.item.filter(
+                        (e) => "ad" !== e.goto,
+                      ));
                     break;
                   case !1:
+                    eb.warn("用户设置首页广告不去除");
                 }
                 break;
             }
@@ -49791,9 +49839,11 @@ let gc = (
               switch (e?.Xlive?.AD) {
                 case !0:
                 default:
-                  delete i.data?.activity_banner_info,
+                  eb.log("✅ 直播banner广告去除"),
+                    delete i.data?.activity_banner_info,
                     i.data?.shopping_info &&
-                      (i.data.shopping_info = { is_show: 0 }),
+                      ((i.data.shopping_info = { is_show: 0 }),
+                      eb.log("✅ 直播购物广告去除")),
                     i.data?.new_tab_info?.outer_list?.length > 0 &&
                       (i.data.new_tab_info.outer_list =
                         i.data.new_tab_info.outer_list.filter(
@@ -49801,6 +49851,7 @@ let gc = (
                         ));
                   break;
                 case !1:
+                  eb.warn("用户设置直播页广告不去除");
               }
         }
         $response.body = JSON.stringify(i);
@@ -49832,11 +49883,12 @@ let gc = (
                       i = af.fromBinary(t);
                       let e = i.playArc?.backgroundPlayConf;
                       e && (!e.isSupport || e.disabled)
-                        ? (i.playArc.backgroundPlayConf.isSupport = !0),
+                        ? (eb.log("✅ 后台播放限制去除"),
+                          (i.playArc.backgroundPlayConf.isSupport = !0),
                           (i.playArc.backgroundPlayConf.disabled = !1),
                           (i.playArc.backgroundPlayConf.extraContent =
-                            null)
-                        : null,
+                            null))
+                        : eb.warn("无后台播放限制"),
                         (t = af.toBinary(i));
                     }
                     break;
@@ -49848,13 +49900,16 @@ let gc = (
                         ) {
                           case !0:
                           default:
-                            i.topicList = void 0;
+                            eb.log("✅ 动态综合页热门话题去除"),
+                              (i.topicList = void 0);
                             break;
                           case !1:
+                            eb.warn("用户设置动态综合页热门话题不去除");
                         }
                         if (e?.Dynamic?.MostVisited === !0)
-                          i.upList = void 0;
-                        else null;
+                          eb.log("✅ 动态综合页最常访问去除"),
+                            (i.upList = void 0);
+                        else eb.warn("用户设置动态综合页最常访问不去除");
                         switch (e?.Dynamic?.AdCard) {
                           case !0:
                           default:
@@ -49862,10 +49917,13 @@ let gc = (
                               (i.dynamicList.list =
                                 i.dynamicList.list.filter(
                                   (e) =>
-                                    15 !== e.cardType || !1,
+                                    15 !== e.cardType ||
+                                    (eb.log("✅ 动态综合页广告动态去除"),
+                                    !1),
                                 ));
                             break;
                           case !1:
+                            eb.warn("用户设置动态综合页广告动态不去除");
                         }
                         t = aK.toBinary(i);
                         break;
@@ -49874,8 +49932,9 @@ let gc = (
                           ((i = az.fromBinary(t)),
                           e?.Dynamic?.MostVisited === !0)
                         )
-                          i.videoUpList = void 0;
-                        else null;
+                          eb.log("✅ 动态视频页最常访问去除"),
+                            (i.videoUpList = void 0);
+                        else eb.warn("用户设置动态视频页最常访问不去除");
                         t = az.toBinary(i);
                     }
                     break;
@@ -49886,26 +49945,34 @@ let gc = (
                           case !0:
                           default:
                             for (let e in ((i = a5.fromBinary(t)),
-                            i.cms?.length && (i.cms = []),
+                            i.cms?.length &&
+                              (eb.log("✅ 播放页广告卡片去除"),
+                              (i.cms = [])),
                             i.relates?.length &&
                               (i.relates = i.relates.filter(
-                                (e) => !e.cm || !1,
+                                (e) =>
+                                  !e.cm ||
+                                  (eb.log("✅ 播放页关联推荐广告去除"), !1),
                               )),
                             (i.cmConfig || i.cmIpad) &&
+                              (eb.log("✅ 播放页定制tab去除"),
                               (i.cmConfig = void 0),
-                              (i.cmIpad = void 0),
+                              (i.cmIpad = void 0)),
                             i.tIcon))
                               null === i.tIcon[e] && delete i.tIcon[e];
                             t = a5.toBinary(i);
                             break;
                           case !1:
+                            eb.warn("用户设置播放页广告不去除");
                         }
                         break;
                       case "TFInfo":
                         (i = a3.fromBinary(t)),
+                          eb.debug(`tipsId: ${i.tipsId}`),
                           i?.tipsId &&
+                            (eb.log("✅ 播放页办卡免流广告去除"),
                             (i.tfToast = void 0),
-                            (i.tfPanelCustomized = void 0),
+                            (i.tfPanelCustomized = void 0)),
                           (t = a3.toBinary(i));
                     }
                     break;
@@ -49916,40 +49983,58 @@ let gc = (
                           case !0:
                           default:
                             (i = o6.fromBinary(t)),
+                              eb.debug(
+                                `ViewUniteReply: ${JSON.stringify(
+                                  i,
+                                  null,
+                                  2,
+                                )}`,
+                              ),
                               i.cm?.sourceContent?.length &&
-                                (i.cm.sourceContent = []),
+                                (eb.log("✅ up主推荐广告去除"),
+                                (i.cm.sourceContent = [])),
                               i.cm?.content5?.content1?.content2
                                 ?.content9 &&
+                                (eb.log("✅ 视频下方广告去除"),
                                 delete i.cm.content5.content1.content2
-                                  .content9,
+                                  .content9),
                               (i.tab.tabModule[0].tab.introduction.modules =
                                 i.tab.tabModule[0].tab.introduction.modules
                                   .map(
                                     (e) => (
                                       28 === e.type &&
+                                        (eb.log(
+                                          "✅ 视频详情下方推荐卡广告去除",
+                                        ),
                                         (e.data.relates.cards =
                                           e.data.relates.cards.filter(
                                             (e) =>
                                               5 !== e.relateCardType &&
                                               4 !== e.relateCardType,
-                                          )),
+                                          ))),
                                       e
                                     ),
                                   )
                                   .filter(
                                     (e) =>
-                                      55 !== e.type || !1,
+                                      55 !== e.type ||
+                                      (eb.log(
+                                        "✅ 视频详情下方up主分享好物去除",
+                                      ),
+                                      !1),
                                   )),
                               (t = o6.toBinary(i));
                             break;
                           case !1:
+                            eb.warn("用户设置up主推荐广告不去除");
                         }
                         break;
                       case "RelatesFeed":
                         ((i = oY.fromBinary(t)).relates = i.relates.filter(
                           (e) =>
                             (4 !== e.relateCardType &&
-                              5 !== e.relateCardType) || !1,
+                              5 !== e.relateCardType) ||
+                            (eb.log("✅ 推荐列表广告卡去除"), !1),
                         )),
                           (t = oY.toBinary(i));
                     }
@@ -49960,7 +50045,8 @@ let gc = (
                         (e) => (
                           e?.name === "teenagers" &&
                             e?.f5?.f1 &&
-                            (e.f5.f1 = 0),
+                            ((e.f5.f1 = 0),
+                            eb.log("✅ 青少年模式弹窗去除")),
                           e
                         ),
                       )),
@@ -49970,9 +50056,12 @@ let gc = (
                     switch (gd?.[1]) {
                       case "DmView":
                         if (((i = sW.fromBinary(t)), e?.DM?.Command === !0))
-                          ey.set(i, "dmView.commandDms", []);
-                        else null;
-                        i.activityMeta.length && (i.activityMeta = []),
+                          eb.log("✅ 交互式弹幕去除"),
+                            ey.set(i, "dmView.commandDms", []);
+                        else eb.warn("用户设置交互式弹幕不去除");
+                        i.activityMeta.length &&
+                          (eb.log("✅ 雲視聽水印去除"),
+                          (i.activityMeta = [])),
                           (t = sW.toBinary(i));
                         break;
                       case "DmSegMobile":
@@ -49982,8 +50071,9 @@ let gc = (
                               e?.colorful === 60001 && (e.colorful = 0), e
                             ),
                           )),
+                            eb.log("✅ 会员弹幕已替换为普通弹幕"),
                             (t = sD.toBinary(i));
-                        else null;
+                        else eb.warn("用户设置会员弹幕不修改");
                     }
                     break;
                   case "bilibili.main.community.reply.v1.Reply":
@@ -49994,12 +50084,16 @@ let gc = (
                           ((i = lN.fromBinary(t)).topReplies =
                             i.topReplies.filter(
                               (e) =>
-                                !Object.keys(e.content.url).length || !1,
+                                !Object.keys(e.content.url).length ||
+                                (eb.log("✅ 评论置顶带货广告去除"), !1),
                             )),
-                            Object.keys(i.cm).length && (i.cm = void 0),
+                            Object.keys(i.cm).length &&
+                              ((i.cm = void 0),
+                              eb.log("✅ 评论列表广告去除")),
                             (t = lN.toBinary(i));
                           break;
                         case !1:
+                          eb.log("✅ 用户设置评论列表广告不去除");
                       }
                     break;
                   case "bilibili.pgc.gateway.player.v2.PlayURL":
@@ -50013,6 +50107,7 @@ let gc = (
                         case !0:
                         default:
                           (i = cc.fromBinary(t)),
+                            eb.log("✅ 搜索页广告去除"),
                             (i.item = i.item.filter(
                               (e) =>
                                 !(
@@ -50023,6 +50118,7 @@ let gc = (
                             (t = cc.toBinary(i));
                           break;
                         case !1:
+                          eb.warn("用户设置搜索页广告不去除");
                       }
                 }
             }
@@ -50032,16 +50128,24 @@ let gc = (
       }
     }
   })()
-    .catch((e) => {})
+    .catch((e) => eb.error(e))
     .finally(() =>
       (function (e = {}) {
         switch (eu) {
           case "Surge":
             e.policy && ey.set(e, "headers.X-Surge-Policy", e.policy),
+              eb.log(
+                "\uD83D\uDEA9 执行结束!",
+                `🕛 ${new Date().getTime() / 1e3 - $script.startTime} 秒`,
+              ),
               $done(e);
             break;
           case "Loon":
             e.policy && (e.node = e.policy),
+              eb.log(
+                "\uD83D\uDEA9 执行结束!",
+                `🕛 ${(new Date() - $script.startTime) / 1e3} 秒`,
+              ),
               $done(e);
             break;
           case "Stash":
@@ -50051,11 +50155,15 @@ let gc = (
                 "headers.X-Stash-Selected-Proxy",
                 encodeURI(e.policy),
               ),
+              eb.log(
+                "\uD83D\uDEA9 执行结束!",
+                `🕛 ${(new Date() - $script.startTime) / 1e3} 秒`,
+              ),
               $done(e);
             break;
           case "Egern":
           case "Shadowrocket":
-            $done(e);
+            eb.log("\uD83D\uDEA9 执行结束!"), $done(e);
             break;
           case "Quantumult X":
             switch (
@@ -50088,13 +50196,12 @@ let gc = (
                   )),
                   (e.body = void 0))
                 : e.body && (e.bodyBytes = void 0),
+              eb.log("\uD83D\uDEA9 执行结束!"),
               $done(e);
             break;
           default:
-            process.exit(1);
+            eb.log("\uD83D\uDEA9 执行结束!"), process.exit(1);
         }
       })($response),
     );
 })();
-
-
