@@ -1,0 +1,6 @@
+// Spotify
+
+hostname = spclient.wg.spotify.com,*-spclient.spotify.com
+
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/user-customization-service\/v1\/customize$ url request-header If-None-Match request-header *
+^https:\/\/(spclient\.wg\.spotify\.com|.*-spclient\.spotify\.com(:443)?)\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$ url script-response-body https://github.com/C-honk/quantumultx/raw/refs/heads/main/Js/Premium.js
